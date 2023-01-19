@@ -1,3 +1,13 @@
 {
-  "cSpell.words": ["imread", "imwrite", "torchvision"]
+  "cSpell.words": [
+    "ckpt",
+    "cuda",
+    "imread",
+    "imwrite",
+    "matplotlib",
+    "optim",
+    "pyplot",
+    "torchmetrics",
+    "torchvision"
+  ]
 }
