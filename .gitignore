@@ -1,3 +1,4 @@
-/rotated_images
-/original_images
 *.csv
+training-data
+testing-data
+*.ckpt
