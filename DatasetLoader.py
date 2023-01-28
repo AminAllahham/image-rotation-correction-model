@@ -30,18 +30,22 @@ class DatasetLoader(Dataset):
 
         image = image.convert('RGB')
 
-        y_label = torch.tensor(single_image_label, dtype=torch.long)
 
-        
+        label = torch.tensor(single_image_label)
+
+        label = np.radians(label)
+
+        label = torch.tensor([np.sin(label), np.cos(label)])
+
+    
         if self.transform is not None:
             img_as_tensor = self.transform(image)
     
         
-        return (img_as_tensor, y_label)
+        return (img_as_tensor, label)
 
     def __len__(self):
         return len(self.data.index)
-
 
 
 

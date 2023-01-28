@@ -1,16 +1,21 @@
+import numpy as np
+import torch
+import torch.nn as nn
+import torchvision.models as models
 from tkinter import Image
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
-
-from ConvNeuralNet import ConvNeuralNet
 from DatasetLoader import DatasetLoader
 
 
-
-
+def sinAndCosToDegree(values):
+    values = np.asarray(values)
+    values = np.arctan2(values[:, 0], values[:, 1])
+    values = np.degrees(values)
+    return values
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,35 +28,39 @@ testing_set = DatasetLoader('testing-data','testing-dataset.csv', 224, 224,2,tra
 
 train_set_size = len(train_set)
 
-batch_size = 64
-learning_rate = 0.001
-num_epochs = 10
+
 
 train_dataset_loader = torch.utils.data.DataLoader(dataset = train_set, batch_size = batch_size,shuffle = True)
 
 testing_dataset_loader = torch.utils.data.DataLoader(dataset = testing_set, batch_size = batch_size,shuffle = True)
 
-print("train_dataset_loader: ", len(train_dataset_loader))
-
-model = ConvNeuralNet()
 
 
+model = models.mobilenet_v2(
+    pretrained=True,
+)
 
-loss_function = nn.L1Loss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+model.classifier[1] = nn.Linear(1280, 2)
+
+
+
+model = model.to(device)
+
+batch_size = 16
+num_epochs = 10
+learning_rate = 0.001
+
+loss_function =  nn.MSELoss()
+
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+
+
+losses = {'train': [], 'test': []}
+acc = {'train': [], 'test': []}
+
 
 total_step = len(train_dataset_loader)
-
-
-losses = {}
-losses['train'] = []
-losses['test'] = []
-
-acc = {}
-acc['train'] = []
-acc['test'] = []
-
-
 
 for epoch in range(num_epochs):
     train_total = 0
@@ -71,29 +80,50 @@ for epoch in range(num_epochs):
                 output = model(images)
 
                 predicted = output.data
-                predicted = predicted.view(1,-1)
                 
-                labels = labels / 90
-                train_total += labels.size(0)
-                closeEnough = 0.5 / 90
-
-                train_correct += (abs(predicted - labels) < closeEnough).float().sum().item()
-
             
-                delta = abs(predicted - labels).sum().item() / labels.size(0)
+                predictedAngles = sinAndCosToDegree(predicted)
 
-                labels = labels.view(-1,1)
-                loss = loss_function(output, labels)
-                train_accuracy = (train_correct / train_total) * 100
+
+                labelAngles = sinAndCosToDegree(labels)
+
+                print(
+                    'Predicted: ', predictedAngles,
+                    '\n',
+                    'Labels: ', labelAngles
+
+                )
+
+                delta = abs(predictedAngles - labelAngles) # numpy.ndarray
+ 
+                deltaCloseEnough = 0.5
+
+                train_total += labels.size(0)
+
+                train_correct += (delta < deltaCloseEnough).sum().item()
+
+                
+
+                loss = loss_function(predicted, labels)
+                loss.requires_grad = True 
+
+                print('Loss: ', loss)
+
                 losses['train'].append(loss.item())
                 acc['train'].append(train_correct / train_total)
 
-            
+                accuracy = train_correct / train_total
+
+        
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                print('Training Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%' 
-                        .format(epoch+1, num_epochs, i+1, total_step, loss.item(), (train_correct / train_total) * 100))
+
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
+                    .format(epoch+1, num_epochs, i+1, total_step, loss.item(), accuracy*100))
+
+
+             
         else:
             print("Testing...")
             model.eval()
@@ -115,43 +145,7 @@ for epoch in range(num_epochs):
                 delta = abs(predicted - labels).sum().item() / labels.size(0)
 
                 labels = labels.view(-1,1)
-                loss = loss_function(output, labels)
-
-
-                losses['test'].append(loss.item())
-
-                test_accuracy = (test_correct / test_total) * 100
-                acc['test'].append(test_accuracy)
-
-                valid_loss += loss.item()
-
-                print('Testing Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
-                        .format(epoch+1, num_epochs, i+1, total_step, loss.item(), test_accuracy))
-
-                # Save the model checkpoint
-                torch.save(model.state_dict(), 'model.ckpt')
-
-
-
-
-
-# load model and test with random image
-model.load_state_dict(torch.load('model.ckpt'))
-model.eval()
-ImageForTest = 'testing-data/000000000000.jpg'
-ImageForTest = Image.open(ImageForTest)
-ImageForTest = ImageForTest.resize((224,224))
-
-ImageForTest = transformations(ImageForTest)
-
-ImageForTest = ImageForTest.unsqueeze(0)
-ImageForTest = ImageForTest.to(device)
-
-output = model(ImageForTest)
-
-print(output)
-
-
+               
 
 
 
