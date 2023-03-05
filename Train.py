@@ -67,8 +67,8 @@ loss_function =  nn.L1Loss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 
-losses = {'train': [], 'test': []}
-acc = {'train': [], 'test': []}
+losses = {'train': [], 'validate': []}
+acc = {'train': [], 'validate': []}
 
 
 total_step = len(train_dataset_loader)
@@ -77,8 +77,8 @@ for epoch in range(num_epochs):
     train_total = 0
     train_correct = 0
 
-    test_total = 0
-    test_correct = 0
+    validate_total = 0
+    validate_correct = 0
 
 
     for phase in ['train', 'validate']:
@@ -110,7 +110,7 @@ for epoch in range(num_epochs):
                     outputs = model(images)
 
                     loss = loss_function(outputs, labels)
-                    calculate_accuracy(outputs, labels, test_total, test_correct)
+                    calculate_accuracy(outputs, labels, validate_total, validate_correct)
 
                     torch.save(model.state_dict(), 'model.ckpt')
 
