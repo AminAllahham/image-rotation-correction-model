@@ -1,13 +1,11 @@
-from tkinter import Image
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.models as models
 import torchvision.transforms as transforms
-from matplotlib import pyplot as plt
 
+from ConvNeuralNet import ConvNeuralNet
 from DatasetLoader import DatasetLoader
 
 
@@ -18,8 +16,27 @@ def sinAndCosToDegree(values):
     return values
 
 
-batch_size = 16
-num_epochs = 10
+
+def calculate_accuracy(outputs, labels , train_total = 0, train_correct = 0):
+    predictedAngles = sinAndCosToDegree(outputs.data)
+    labelAngles = sinAndCosToDegree(labels)
+
+    print('Predicted Angles:',predictedAngles)
+    print('Label Angles:',labelAngles)
+
+    closeEnough = 0.5
+
+    train_total += labels.size(0)
+    train_correct += (abs(predictedAngles - labelAngles) < closeEnough).sum().item()
+
+    accuracy = train_correct / train_total
+
+    return accuracy
+
+
+
+batch_size = 8
+num_epochs = 16
 learning_rate = 0.001
 
 
@@ -29,7 +46,7 @@ transformations = transforms.Compose([transforms.ToTensor()])
 
 train_set = DatasetLoader('training-data', 'training-dataset.csv', 224, 224,2,transformations)
 
-testing_set = DatasetLoader('testing-data','testing-dataset.csv', 224, 224,2,transformations)
+validation_set = DatasetLoader('validation-data','validation-dataset.csv', 224, 224,2,transformations)
 
 train_set_size = len(train_set)
 
@@ -37,21 +54,17 @@ train_set_size = len(train_set)
 
 train_dataset_loader = torch.utils.data.DataLoader(dataset = train_set, batch_size = batch_size,shuffle = True)
 
-testing_dataset_loader = torch.utils.data.DataLoader(dataset = testing_set, batch_size = batch_size,shuffle = True)
+validating_dataset_loader = torch.utils.data.DataLoader(dataset = validation_set, batch_size = batch_size,shuffle = True)
        
-model = models.mobilenet_v2(
-    pretrained=False,
-)
-
-model.classifier[1] = nn.Linear(1280, 2)
-
+model =  ConvNeuralNet()
 model = model.to(device)
 
+# Load the model from the checkpoint
+model.load_state_dict(torch.load('model.ckpt'))
 
 loss_function =  nn.L1Loss()
 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
 
 
 losses = {'train': [], 'test': []}
@@ -68,63 +81,42 @@ for epoch in range(num_epochs):
     test_correct = 0
 
 
-    for phase in ['train', 'test']:
+    for phase in ['train', 'validate']:
         if phase == 'train':
             model.train()
             for i, (images, labels) in enumerate(train_dataset_loader):
                 images = images.to(device)
                 labels = labels.to(device)
-            
                 outputs = model(images)
-
                 loss = loss_function(outputs, labels)
 
 
+                acc =  calculate_accuracy(outputs, labels, train_total, train_correct)
+
+            
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
+                print('Trining Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'.format(epoch + 1, num_epochs, i + 1, total_step, loss.item(), acc * 100))
 
-            
-                predictedAngles = sinAndCosToDegree(outputs.data)
-                labelAngles = sinAndCosToDegree(labels)
-
-                closeEnough = 0.5
-
-                train_total += labels.size(0)
-                train_correct += (abs(predictedAngles - labelAngles) < closeEnough).sum().item()
-
-                accuracy = train_correct / train_total
-
-                
-                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
-                    .format(epoch+1, num_epochs, i+1, total_step, loss.item(), accuracy*100))
-             
         else:
             model.eval()
             with torch.no_grad():
-                for images, labels in testing_dataset_loader:
+                for i, (images, labels) in enumerate(validating_dataset_loader):
                     images = images.to(device)
                     labels = labels.to(device)
+
                     outputs = model(images)
 
                     loss = loss_function(outputs, labels)
+                    calculate_accuracy(outputs, labels, test_total, test_correct)
 
-                    predictedAngles = sinAndCosToDegree(outputs.data)
-                    labelAngles = sinAndCosToDegree(labels)
+                    torch.save(model.state_dict(), 'model.ckpt')
 
-                    closeEnough = 0.5
+                    print('Validation Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'.format(epoch + 1, num_epochs, i + 1, total_step, loss.item(), acc * 100))
 
-                    test_total += labels.size(0)
-                    test_correct += (abs(predictedAngles - labelAngles) < closeEnough).sum().item()
-
-                    accuracy = test_correct / test_total
-
-                    print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
-                        .format(epoch+1, num_epochs, i+1, total_step, loss.item(), accuracy*100))
-            
-            # Save the model checkpoint
-            torch.save(model.state_dict(), 'model.ckpt')
+torch.save(model, 'model.pth')
 
 
 

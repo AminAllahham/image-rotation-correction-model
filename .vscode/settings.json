@@ -1,10 +1,12 @@
 {
   "cSpell.words": [
     "arctan",
+    "asarray",
     "ckpt",
     "cuda",
     "imread",
     "imwrite",
+    "liveloss",
     "matplotlib",
     "optim",
     "pyplot",
