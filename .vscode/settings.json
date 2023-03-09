@@ -4,13 +4,17 @@
     "asarray",
     "ckpt",
     "cuda",
+    "frameon",
     "imread",
     "imwrite",
     "liveloss",
     "matplotlib",
     "optim",
     "pyplot",
+    "savefig",
     "torchmetrics",
-    "torchvision"
+    "torchvision",
+    "xlabel",
+    "ylabel"
   ]
 }

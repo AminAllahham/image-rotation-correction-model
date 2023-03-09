@@ -1,4 +1,6 @@
 *.csv
 training-data
 testing-data
+validation-data
 *.ckpt
+*.pth
