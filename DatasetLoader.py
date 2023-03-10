@@ -22,7 +22,7 @@ class DatasetLoader(Dataset):
     
 
     def __getitem__(self, index):
-        single_image_label = self.labels[index]
+        label = self.labels[index]
 
         image = Image.open(os.path.join(self.data.iloc[index][1]))
 
@@ -30,14 +30,16 @@ class DatasetLoader(Dataset):
 
         image = image.convert('RGB')
 
-
-        label = torch.tensor(single_image_label)
+        
+        label = torch.tensor(label)
 
         label = np.radians(label)
 
         label = torch.tensor([np.sin(label), np.cos(label)])
 
-    
+
+
+
         if self.transform is not None:
             img_as_tensor = self.transform(image)
     
