@@ -5,6 +5,7 @@
     "ckpt",
     "cuda",
     "frameon",
+    "fromarray",
     "imread",
     "imwrite",
     "liveloss",
@@ -14,6 +15,7 @@
     "savefig",
     "torchmetrics",
     "torchvision",
+    "unsqueeze",
     "xlabel",
     "ylabel"
   ]

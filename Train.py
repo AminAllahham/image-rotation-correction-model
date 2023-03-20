@@ -1,11 +1,8 @@
 import os
-
-import numpy as np
 import torch
-import torchvision.transforms as transforms
-
 from CnnNet import ConvNeuralNet
 from DatasetLoader import DatasetLoader
+from Transforms import transform
 from Utils import sinAndCosToRotationsDegrees
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -17,11 +14,6 @@ learning_rate = 0.0001
 
 max_valid_delta = 0.5
 
-transform =transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Resize((224, 224)),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
 
 
 train_set = DatasetLoader('training-data', 'training-data.csv',2,transform)
