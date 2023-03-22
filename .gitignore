@@ -4,3 +4,4 @@ testing-data
 validation-data
 *.ckpt
 *.pth
+*.pyc
