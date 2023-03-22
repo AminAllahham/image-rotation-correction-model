@@ -5,3 +5,4 @@ validation-data
 *.ckpt
 *.pth
 *.pyc
+__pycache__
