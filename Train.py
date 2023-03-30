@@ -1,11 +1,14 @@
 import os
+
+import numpy as np
 import torch
+
 from CnnNet import ConvNeuralNet
 from DatasetLoader import DatasetLoader
 from Transforms import transform
 from Utils import sinAndCosToRotationsDegrees
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('mps' if torch.cuda.is_available() else 'cpu')
 
 
 num_epochs = 10
@@ -16,8 +19,8 @@ max_valid_delta = 0.5
 
 
 
-train_set = DatasetLoader('training-data', 'training-data.csv',2,transform)
-validation_set = DatasetLoader('training-data','validation-data.csv',2,transform)
+train_set = DatasetLoader('training-data/training-data.csv',2,transform)
+validation_set = DatasetLoader('training-data/validation-data.csv',2,transform)
 
 train_dataset_loader = torch.utils.data.DataLoader(dataset = train_set, batch_size = batch_size,shuffle = True)
 validating_dataset_loader = torch.utils.data.DataLoader(dataset = validation_set, batch_size = batch_size, shuffle = True)
@@ -30,7 +33,7 @@ model = ConvNeuralNet()
 model = model.to(device)
 
 
-criterion = torch.nn.MSELoss()
+criterion = torch.nn.L1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 
@@ -90,7 +93,7 @@ for epoch in range(num_epochs):
                 
 
 print('Finished Training 🚀')
-# Last Number of parameters:  
+# Last Number of parameters:  13765218
 print('Number of parameters: ', sum(p.numel() for p in model.parameters() if p.requires_grad))
 torch.save(model, 'model.pth')
 

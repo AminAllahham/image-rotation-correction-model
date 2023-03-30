@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from PIL import Image
 
-from Utils import rotate_image, sinAndCosToRotationsDegrees
 from DatasetLoader import DatasetLoader
 from Transforms import transform
+from Utils import rotate_image, sinAndCosToRotationsDegrees
 
 # load the model from disk and predict the output for the given image
 model = torch.load('model.pth')
@@ -15,7 +15,9 @@ model.eval()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-testing_dataset = DatasetLoader('training-data','testing-data.csv',2,transform)
+
+
+testing_dataset = DatasetLoader('training-data/testing-data.csv',2,transform)
 testing_dataset_loader = torch.utils.data.DataLoader(dataset = testing_dataset, batch_size = 1,shuffle = True)
 
 
@@ -24,6 +26,7 @@ def  load_25_random_image():
     for i in range(25):
         img, label = testing_dataset[i]
         img = img.unsqueeze(0)
+    
         img = img.to(device)
         
         output = model(img)
@@ -32,7 +35,7 @@ def  load_25_random_image():
         label = np.arctan2(label[0], label[1])
         label = np.degrees(label)
 
-        print([output, label.item()])
+        # print([output, label.item()])
         delta = abs(output - label).item()
 
         if delta < 0.5:
@@ -53,13 +56,13 @@ def load_from_images_folder_and_predict():
         copyImage = cv2.imread(img_path)
 
         img = Image.fromarray(img)
+        img = img.convert('L')
         img = transform(img)
         img = img.unsqueeze(0)
         img = img.to(device)
         output = model(img)
         output = sinAndCosToRotationsDegrees(output.data).item()
-
-        print('Output' , output)
+        print(output)
 
         rotatedImage = rotate_image(copyImage, -output)
         mergedImage = np.concatenate((copyImage, rotatedImage), axis=1)
@@ -72,9 +75,9 @@ def load_from_images_folder_and_predict():
         mergedImage.save('output/' + image)
 
 
-# load_from_images_folder_and_predict()
-# load_25_random_image()
+load_from_images_folder_and_predict()
 
+# load_25_random_image()
 
 
 
