@@ -7,10 +7,15 @@
     "fromarray",
     "iloc",
     "imread",
+    "matplotlib",
     "numel",
     "optim",
+    "pyplot",
     "randn",
+    "savefig",
     "torchvision",
-    "unsqueeze"
+    "unsqueeze",
+    "xlabel",
+    "ylabel"
   ]
 }

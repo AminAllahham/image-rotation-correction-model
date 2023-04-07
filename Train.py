@@ -1,21 +1,24 @@
 import os
 
-import numpy as np
 import torch
 
 from CnnNet import ConvNeuralNet
 from DatasetLoader import DatasetLoader
 from Transforms import transform
-from Utils import sinAndCosToRotationsDegrees
+from Utils import (draw_compare_graph, get_average_values,
+                   sinAndCosToRotationsDegrees)
+
 
 device = torch.device('mps' if torch.cuda.is_available() else 'cpu')
 
+print('Using Gpu device:', device)
 
-num_epochs = 10
+
+num_epochs = 16
 batch_size = 8
 learning_rate = 0.0001
 
-max_valid_delta = 0.5
+max_valid_delta = 0.2
 
 
 
@@ -40,8 +43,15 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 if os.path.exists('model.ckpt'):
     model.load_state_dict(torch.load('model.ckpt'))
 
+losses = { 'train': [], 'validate': [] }
+accuracies = { 'train': [], 'validate': [] }
 
 for epoch in range(num_epochs):
+    losses['train'].append([])
+    losses['validate'].append([])
+    accuracies['train'].append([])
+    accuracies['validate'].append([])
+
     for phase in ['train', "validate"]:
         if phase == 'train':
             model.train()
@@ -61,6 +71,8 @@ for epoch in range(num_epochs):
             optimizer.zero_grad()
 
             outputs = model(images)
+
+            
             loss = criterion(outputs, labels)
 
             if phase == 'train':
@@ -71,8 +83,8 @@ for epoch in range(num_epochs):
             total_running += labels.size(0)
 
 
-            predicted = sinAndCosToRotationsDegrees(outputs.data)
-            target = sinAndCosToRotationsDegrees(labels)
+            predicted = sinAndCosToRotationsDegrees(outputs.cpu().data)
+            target = sinAndCosToRotationsDegrees(labels.cpu().data)
 
             delta = abs(predicted - target)
 
@@ -84,21 +96,22 @@ for epoch in range(num_epochs):
             epoch_acc = 100 * (total_correct / total_running)
 
             if phase == 'train':
+                losses['train'][epoch].append(loss.item())
+                accuracies['train'][epoch].append(epoch_acc)
                 print('Training Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%' .format(epoch + 1, num_epochs, i + 1, len(train_dataset_loader), loss.item(), epoch_acc))
             else:
+                losses['validate'][epoch].append(loss.item())
+                accuracies['validate'][epoch].append(epoch_acc)
                 print('Testing Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%' .format(epoch + 1, num_epochs, i + 1, len(validating_dataset_loader), loss.item(), epoch_acc))
                 torch.save(model.state_dict(), 'model.ckpt')
                 torch.save(model, 'model.pth')
 
-                
+      
+draw_compare_graph(get_average_values(losses['train']),get_average_values(losses['validate']), 'Loss', f'last-Loss.png')
+draw_compare_graph(get_average_values(accuracies['train']), get_average_values(accuracies['validate']), 'Accuracy', f'last-Accuracy.png')
+
+
 
 print('Finished Training 🚀')
-# Last Number of parameters:  13765218
 print('Number of parameters: ', sum(p.numel() for p in model.parameters() if p.requires_grad))
 torch.save(model, 'model.pth')
-
-
-
-
-
-

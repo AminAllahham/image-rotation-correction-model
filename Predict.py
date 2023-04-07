@@ -21,9 +21,9 @@ testing_dataset = DatasetLoader('training-data/testing-data.csv',2,transform)
 testing_dataset_loader = torch.utils.data.DataLoader(dataset = testing_dataset, batch_size = 1,shuffle = True)
 
 
-def  load_25_random_image():
+def  load_random_image(number = 1):
     accuracy = 0
-    for i in range(25):
+    for i in range(number):
         img, label = testing_dataset[i]
         img = img.unsqueeze(0)
     
@@ -43,7 +43,7 @@ def  load_25_random_image():
         else:
             print("DELTA ON Wrong: ", delta)
 
-    print('Accuracy on 25 Test Image: ', (accuracy/25) * 100 , '%')
+    print(f'Accuracy on {number} Test Image: ', (accuracy/number) * 100 , '%')
 
 
 def load_from_images_folder_and_predict():
@@ -75,9 +75,9 @@ def load_from_images_folder_and_predict():
         mergedImage.save('output/' + image)
 
 
-load_from_images_folder_and_predict()
+# load_from_images_folder_and_predict()
 
-# load_25_random_image()
+load_random_image(100)
 
 
 

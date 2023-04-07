@@ -1,5 +1,8 @@
 *.csv
 training-data
+training-data-v1
+training-data-v3
+training-data-small
 testing-data
 images
 output
