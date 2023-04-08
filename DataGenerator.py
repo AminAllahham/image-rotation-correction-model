@@ -17,6 +17,7 @@ def rotate_image(image, angle):
 
 def pdf_to_rotated_images(pdf_path, pdf_name, rotated_images_folder):
     images = convert_from_path(pdf_path + '/' + pdf_name)
+        
     os.makedirs(rotated_images_folder, exist_ok=True)
     results = []
     print('Total images: ', len(images))

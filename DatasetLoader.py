@@ -22,7 +22,7 @@ class DatasetLoader(Dataset):
     def __getitem__(self, index):
         label = self.labels[index]
 
-        image = Image.open(os.path.join(self.data.iloc[index][1]))
+        image = Image.open(os.path.join(self.data.iloc[index][0]))
 
         image = image.convert('L')
 

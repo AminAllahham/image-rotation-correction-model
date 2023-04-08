@@ -22,8 +22,8 @@ max_valid_delta = 0.2
 
 
 
-train_set = DatasetLoader('training-data/training-data.csv',2,transform)
-validation_set = DatasetLoader('training-data/validation-data.csv',2,transform)
+train_set = DatasetLoader('training-data/training-data.csv',1,transform)
+validation_set = DatasetLoader('training-data/validation-data.csv',1,transform)
 
 train_dataset_loader = torch.utils.data.DataLoader(dataset = train_set, batch_size = batch_size,shuffle = True)
 validating_dataset_loader = torch.utils.data.DataLoader(dataset = validation_set, batch_size = batch_size, shuffle = True)
