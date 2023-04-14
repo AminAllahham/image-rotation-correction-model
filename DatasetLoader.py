@@ -10,9 +10,15 @@ from torchvision import transforms
 
 
 class DatasetLoader(Dataset):
-    def __init__(self, csv_path, labelIndex, transform=None):
+    def __init__(self, csv_path, labelIndex, transform=None, numberOfRows=None):
 
         self.data = pd.read_csv(csv_path)
+        
+        # check if numberOfRows is not null
+        if numberOfRows is not None:
+            self.data = self.data.sample(frac=1).reset_index(drop=True)
+            self.data = self.data.iloc[:numberOfRows, :]
+
         self.labelIndex = labelIndex
         self.labels = np.asarray(self.data.iloc[:, self.labelIndex])
 

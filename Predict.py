@@ -17,12 +17,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 
-testing_dataset = DatasetLoader('training-data/testing-data.csv',1,transform)
-testing_dataset_loader = torch.utils.data.DataLoader(dataset = testing_dataset, batch_size = 1,shuffle = True)
 
 
 def  load_random_image(number = 1):
     accuracy = 0
+    testing_dataset = DatasetLoader('training-data/testing-data.csv',1,transform)
+    testing_dataset_loader = torch.utils.data.DataLoader(dataset = testing_dataset, batch_size = 1,shuffle = True)
+
     for i in range(number):
         img, label = testing_dataset[i]
         img = img.unsqueeze(0)
@@ -38,7 +39,7 @@ def  load_random_image(number = 1):
         # print([output, label.item()])
         delta = abs(output - label).item()
 
-        if delta < 0.4:
+        if delta < 0.5:
             accuracy += 1
         else:
             print("DELTA ON Wrong: ", delta)

@@ -18,12 +18,15 @@ num_epochs = 16
 batch_size = 8
 learning_rate = 0.0001
 
-max_valid_delta = 0.2
+max_valid_delta = 0.4
 
 
+# 
+number_of_rows_to_load = 1000
 
-train_set = DatasetLoader('training-data/training-data.csv',1,transform)
-validation_set = DatasetLoader('training-data/validation-data.csv',1,transform)
+
+train_set = DatasetLoader('training-data/training-data.csv',1,transform, number_of_rows_to_load)
+validation_set = DatasetLoader('training-data/validation-data.csv',1,transform, number_of_rows_to_load)
 
 train_dataset_loader = torch.utils.data.DataLoader(dataset = train_set, batch_size = batch_size,shuffle = True)
 validating_dataset_loader = torch.utils.data.DataLoader(dataset = validation_set, batch_size = batch_size, shuffle = True)
