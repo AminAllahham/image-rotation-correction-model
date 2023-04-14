@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import pandas as pd
 from pdf2image import convert_from_path
-from PIL import Image
 
 
 
@@ -15,102 +14,64 @@ def rotate_image(image, angle):
     result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
     return result
 
-def pdf_to_rotated_images(pdf_path, pdf_name, rotated_images_folder):
-    images = convert_from_path(pdf_path + '/' + pdf_name)
-        
-    os.makedirs(rotated_images_folder, exist_ok=True)
-    results = []
-    print('Total images: ', len(images))
-
     
-    for i, image in enumerate(images):
-        print('Processing image: ', i)
-        imageFileName = pdf_name + '-' + str(i) + '-' + str(uuid.uuid4().hex)[:8] + '.jpg'
+def load_pdf(pdf_path):
+    print('Loading pdf: ', pdf_path)
+    images = convert_from_path(pdf_path)
+    return images
 
-        if np.mean(image) == 255:
-            print('Skipping blank image: ', i)
-            continue
 
-         
-        for  copyIdx in range(0, 30):
+def create_data_folder(images, folder_name , num_copies=30):
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+    
+    if not os.path.exists(os.path.join(folder_name, 'rotated-images')):
+        os.mkdir(os.path.join(folder_name, 'rotated-images'))
+        
+    csv_rows = []
+    for image in images:
+        for  copyIdx in range(0, num_copies):
              index = copyIdx + 1
              idxToUniform = index < 16 and -index or index - 15
              nextIndex =  idxToUniform + 1
 
              degree = copyIdx  == 0 and 0 or random.uniform(nextIndex, idxToUniform)
-             print('Processing copy image: ', copyIdx, ' with degree: ', degree)
+            
+             rotated_image = rotate_image(np.array(image), degree)
+
+             image_name = str(uuid.uuid4()) + '.jpg' 
+             image_path = os.path.join(folder_name + '/rotated-images', image_name)
+             cv2.imwrite(image_path, rotated_image)
+             csv_rows.append([image_path, degree])
+
+        df = pd.DataFrame(csv_rows, columns=['image-path', 'degree'])
+        df.to_csv(os.path.join(folder_name, 'dataset.csv'), index=False)
 
 
-             imageFileName = pdf_name + '-' + str(i) + '-' + str(uuid.uuid4().hex)[:8]  + '(' + str(degree) + ')' + '.jpg'
+if __name__ == "__main__":
+    pdfs = [f for f in os.listdir('training-pdfs') if f.endswith('.pdf')]
+    all_images = []
+    for pdf in pdfs:
+        images = load_pdf(os.path.join('training-pdfs', pdf))
     
-             result = rotate_image(np.array(image), degree)
-             resultAsImage = Image.fromarray(result)
-             resultImagePath = os.path.join(rotated_images_folder, imageFileName)       
+        for image in images:
+            all_images.append(image)
 
-             row = {
-                'rotated_path': resultImagePath,
-                'degree': degree
-             }
-             results.append(row)
 
-             resultAsImage.save(resultImagePath, 'JPEG')
-             
-    return results
+    all_images = random.sample(all_images, len(all_images))
+
+    print('total images before copies: ', len(all_images))
+
+    # split all images into 40% train, 20% test, 40% validation
+    train_images = all_images[:int(len(all_images) * 0.4)]
+    test_images = all_images[int(len(all_images) * 0.4):int(len(all_images) * 0.6)]
+    validation_images = all_images[int(len(all_images) * 0.6):]
+
+    create_data_folder(train_images, 'training-data')
+
+    create_data_folder(test_images, 'testing-data')
+
+    create_data_folder(validation_images, 'validation-data')
+
         
     
-
-
-if not os.path.exists('training-data'):
-      os.makedirs('training-data')
-
-
-def generate():
-     for pathTo in ["training-pdfs"]:
-      resultsList = []   
-      data_folder_name = pathTo.split('-')[0] + '-data'
-
-      rotated_images_folder  = data_folder_name + '/' + 'rotated-images'
-
-      for pdf_name in os.listdir(pathTo):
-          print('Processing pdf: ', pdf_name)
-          # if not pdf name ends with pdf, skip
-          if not pdf_name.endswith('.pdf'):
-                continue
-
-          values = pdf_to_rotated_images(pathTo, pdf_name, rotated_images_folder)
-          resultsList.extend(values)
-          
-
-      print('Total images: ', len(resultsList))
-      return resultsList
-
-
-allData = generate()
-
-allDataScuffled = random.sample(allData, len(allData))
-
-trainingData = allDataScuffled[:int(len(allDataScuffled) * 0.4)]
-validationData = allDataScuffled[int(len(allDataScuffled) * 0.4):int(len(allDataScuffled) * 0.8)]
-testingData = allDataScuffled[int(len(allDataScuffled) * 0.8):]
-
-
-trainingDataDf = pd.DataFrame(trainingData)
-trainingDataDf.to_csv('training-data/training-data.csv', index=False)
-
-validationDataDf = pd.DataFrame(validationData)
-
-validationDataDf.to_csv('training-data/validation-data.csv', index=False)
-
-testingDataDf = pd.DataFrame(testingData)
-
-testingDataDf.to_csv('training-data/testing-data.csv', index=False)
-
-
-
-print('Total training images: ', len(trainingData))
-print('Total validation images: ', len(validationData))
-print('Total testing images: ', len(testingData))
-
-
-
-

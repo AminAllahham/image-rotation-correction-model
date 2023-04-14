@@ -1,12 +1,9 @@
 *.csv
 training-data
-training-data-v1
-training-data-v3
-training-data-small
 testing-data
+validation-data
 images
 output
-validation-data
 *.ckpt
 *.pth
 *.pyc
